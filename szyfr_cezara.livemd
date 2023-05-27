@@ -1,0 +1,80 @@
+<!-- livebook:{"app_settings":{"slug":"szyfr-cezara","access_type":"public"}} -->
+
+# Szyfr Cezara
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.9.1"}
+])
+```
+
+## Szyfrowanie wiadomości
+
+```elixir
+inputs = [
+  text: Kino.Input.text("Wpisz wiadomość"),
+  shift: Kino.Input.number("Wpisz liczbę pomiędzy -32 a 32", default: 1)
+]
+
+form = Kino.Control.form(inputs, submit: "Szyfruj")
+```
+
+```elixir
+frame = Kino.Frame.new()
+```
+
+```elixir
+Kino.Frame.render(
+  frame,
+  Kino.Markdown.new("Tutaj pojawi się wynik szyfrowania.")
+)
+```
+
+```elixir
+alphabet = 'aąbcćdeęfghijklłmnńoóprsśtuwyzżź'
+coding_table = Enum.zip(0..31, alphabet)
+
+encode = fn c ->
+  case List.keyfind(coding_table, c, 1) do
+    nil -> 32
+    {offset, _} -> offset
+  end
+end
+
+decode = fn c ->
+  case List.keyfind(coding_table, c, 0) do
+    nil -> ' '
+    {_, character} -> character
+  end
+end
+
+cypher = fn
+  32, shift -> {32, shift}
+  c, shift when 0 <= c + shift and c + shift <= 31 -> {c + shift, shift}
+  c, shift when c + shift < 0 -> {c + shift + 32, shift}
+  c, shift when c + shift > 31 -> {c + shift - 32, shift}
+end
+```
+
+```elixir
+Kino.listen(
+  form,
+  coding_table,
+  fn %{data: %{text: text, shift: shift}}, coding_table ->
+    text_encrypted =
+      text
+      |> String.downcase()
+      |> String.to_charlist()
+      |> Enum.map(encode)
+      |> Enum.map_reduce(shift, cypher)
+      |> elem(0)
+      |> Enum.map(decode)
+      |> :unicode.characters_to_binary()
+
+    content = Kino.Markdown.new(text_encrypted)
+    Kino.Frame.render(frame, content)
+
+    {:cont, coding_table}
+  end
+)
+```

@@ -1,0 +1,78 @@
+<!-- livebook:{"app_settings":{"slug":"za-duzo-za-malo","access_type":"public"}} -->
+
+# Za dużo za mało
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.9.1"}
+])
+```
+
+## Gra w za dużo za mało
+
+```elixir
+rand = :rand.uniform(1_000)
+```
+
+```elixir
+frame = Kino.Frame.new()
+```
+
+```elixir
+Kino.Frame.render(
+  frame,
+  Kino.Markdown.new("Spróbuj zgadnąć liczbę od 1 do 1000. Masz tylko 10 prób.")
+)
+```
+
+```elixir
+inputs = [number: Kino.Input.text("Wpisz liczbę od 1 do 1000")]
+
+form = Kino.Control.form(inputs, submit: "Zgaduję", reset_on_submit: [:number])
+```
+
+```elixir
+check_guess = fn
+  guess, number when guess == number ->
+    "**Brawo! Ta liczba to `#{guess}`.**"
+
+  guess, number when guess < number ->
+    "**`#{guess}` to za mało.**"
+
+  guess, number when guess > number ->
+    "**`#{guess}` to za dużo.**"
+end
+
+create_prompt = fn
+  true, _ -> " Koniec gry."
+  false, 9 -> " Została ostatnia próba."
+  false, n -> " Możesz jeszcze zgadywać #{10 - n} razy."
+end
+
+Kino.listen(
+  form,
+  {1, rand},
+  fn %{data: %{number: number}}, {counter, random} ->
+    case Integer.parse(number) do
+      {guess, _} ->
+        text = check_guess.(guess, random)
+        gameover? = guess == random or counter == 10
+        prompt = create_prompt.(gameover?, counter)
+
+        content = Kino.Markdown.new(text <> prompt)
+        Kino.Frame.append(frame, content)
+
+        if gameover? do
+          :halt
+        else
+          {:cont, {counter + 1, random}}
+        end
+
+      :error ->
+        content = Kino.Markdown.new("Wpisz liczbę.")
+        Kino.Frame.append(frame, content)
+        {:cont, {counter, random}}
+    end
+  end
+)
+```

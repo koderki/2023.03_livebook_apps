@@ -1,0 +1,90 @@
+<!-- livebook:{"app_settings":{"slug":"szyfr-xor","access_type":"public"}} -->
+
+# Szyfr XOR
+
+```elixir
+Mix.install([
+  {:kino, "~> 0.9.1"}
+])
+```
+
+## Szyfrowanie wiadomości
+
+```elixir
+inputs = [
+  text: Kino.Input.text("Wpisz wiadomość"),
+  key: Kino.Input.text("Wpisz klucz szyfrujący")
+]
+
+form = Kino.Control.form(inputs, submit: "Szyfruj")
+```
+
+```elixir
+frame = Kino.Frame.new()
+```
+
+```elixir
+Kino.Frame.render(
+  frame,
+  Kino.Markdown.new("Tutaj pojawi się wynik szyfrowania.")
+)
+```
+
+```elixir
+alphabet = 'aąbcćdeęfghijklłmnńoóprsśtuwyzżź'
+coding_table = Enum.zip(0..31, alphabet)
+
+encode = fn c ->
+  case List.keyfind(coding_table, c, 1) do
+    nil -> 32
+    {offset, _} -> offset
+  end
+end
+
+decode = fn c ->
+  case List.keyfind(coding_table, c, 0) do
+    nil -> ' '
+    {_, character} -> character
+  end
+end
+
+cypher = fn {c, k}, acc ->
+  case c do
+    32 -> [' ' | acc]
+    _ -> [Bitwise.bxor(c, k) | acc]
+  end
+end
+```
+
+```elixir
+Kino.listen(
+  form,
+  coding_table,
+  fn %{data: %{text: text, key: key}}, coding_table ->
+    key = key |> String.downcase()
+
+    text_encoded =
+      text
+      |> String.downcase()
+      |> String.to_charlist()
+      |> Enum.map(encode)
+
+    key_encoded =
+      String.pad_leading("", length(text_encoded), key)
+      |> String.to_charlist()
+      |> Enum.map(encode)
+
+    text_encrypted =
+      Enum.zip(text_encoded, key_encoded)
+      |> Enum.reduce([], cypher)
+      |> Enum.reverse()
+      |> Enum.map(decode)
+      |> :unicode.characters_to_binary()
+
+    content = Kino.Markdown.new(text_encrypted)
+    Kino.Frame.render(frame, content)
+
+    {:cont, coding_table}
+  end
+)
+```
