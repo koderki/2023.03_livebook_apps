@@ -1,0 +1,14 @@
+diff --git a/Dockerfile b/Dockerfile
+index 15e8e0a1..df9aa789 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -79,6 +79,9 @@ ENV LIVEBOOK_HOME=/data
+ # Copy the release build from the previous stage
+ COPY --from=build /app/_build/prod/rel/livebook /app
+ 
++# Copy Livebook apps folder
++COPY apps /app/apps
++
+ # Make release files available to any user, in case someone
+ # runs the container with `--user`
+ RUN chmod -R go=u /app
