@@ -4,7 +4,7 @@
 
 ```elixir
 Mix.install([
-  {:kino, "~> 0.9.1"}
+  {:kino, "~> 0.9.4"}
 ])
 ```
 
@@ -63,7 +63,14 @@ Kino.listen(
         Kino.Frame.append(frame, content)
 
         if gameover? do
-          :halt
+          content = Kino.Markdown.new("Za chwilę gra się zresetuje.")
+          Kino.Frame.append(frame, content)
+
+          Process.sleep(10_000)
+
+          content = Kino.Markdown.new("Spróbuj zgadnąć liczbę od 1 do 1000. Masz tylko 10 prób.")
+          Kino.Frame.render(frame, content)
+          {:cont, {1, :rand.uniform(1_000)}}
         else
           {:cont, {counter + 1, random}}
         end
