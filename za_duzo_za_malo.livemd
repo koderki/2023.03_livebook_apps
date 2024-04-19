@@ -1,10 +1,10 @@
-<!-- livebook:{"app_settings":{"slug":"za-duzo-za-malo","access_type":"public"}} -->
+<!-- livebook:{"app_settings":{"access_type":"public","multi_session":true,"output_type":"rich","show_existing_sessions":false,"slug":"za-duzo-za-malo"}} -->
 
 # Za dużo za mało
 
 ```elixir
 Mix.install([
-  {:kino, "~> 0.9.4"}
+  {:kino, "~> 0.12.3"}
 ])
 ```
 
